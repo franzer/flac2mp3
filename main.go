@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 func mkFolder(folder string) string {
@@ -31,7 +32,10 @@ func mkFolder(folder string) string {
 	}
 }
 
-func execLame(filename string, newLoc string) {
+func execLame(wg *sync.WaitGroup, filename string, newLoc string) {
+	// Converts a file from flac to mp3 v0 using FFMPEG //
+
+	defer wg.Done()
 	file := filepath.Base(filename)
 	mp3out := fmt.Sprintf(`%s/%s.mp3`, newLoc, strings.TrimSuffix(file, ".flac"))
 	args := []string{`-y`, `-i`, filename, `-codec:a`, "libmp3lame", `-q:a`, "0", `-map_metadata`, "0", `-id3v2_version`, "3", `-write_id3v1`, "1", mp3out}
@@ -44,6 +48,7 @@ func execLame(filename string, newLoc string) {
 }
 
 func convertFiles(oldFolder string) error {
+	var wg sync.WaitGroup
 	files, err := os.ReadDir(oldFolder)
 	if err != nil {
 		return err
@@ -54,12 +59,14 @@ func convertFiles(oldFolder string) error {
 	for _, file := range files {
 		path := path.Ext(file.Name())
 		if path == ".flac" {
+			wg.Add(1)
 			newFile := (fmt.Sprintf(`%s/%s`, strings.TrimRight(oldFolder, "/"), file.Name()))
 			//fmt.Printf("%s - %s\n", newFile, newLoc)
 
-			execLame(newFile, newLoc)
+			go execLame(&wg, newFile, newLoc)
 		}
 	}
+	wg.Wait()
 	return nil
 }
 
