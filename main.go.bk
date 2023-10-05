@@ -1,0 +1,38 @@
+package main
+
+import (
+	"fmt"
+	"github.com/eaburns/flac"
+	"github.com/viert/go-lame"
+	"os"
+)
+
+func main() {
+	fileName := "./Sample_BeeMoved_96kHz24bit.flac"
+
+	file, err := os.Open(fileName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error opening file %s: %s\n", fileName, err)
+		os.Exit(1)
+	}
+	defer file.Close()
+
+	stream, err := flac.NewDecoder(file)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error parsing FLAC stream: %s\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Metadata: %v\n", stream.MetaData)
+
+	for {
+		frame, err := stream.Next()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing FLAC frame: %s\n", err)
+			os.Exit(1)
+		}
+
+		// Access frame data
+		fmt.Printf("Frame: %v\n", frame)
+	}
+}
