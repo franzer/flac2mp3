@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -9,6 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/briandowns/spinner"
 )
 
 func mkFolder(folder string) string {
@@ -40,11 +44,11 @@ func execLame(wg *sync.WaitGroup, filename string, newLoc string) {
 	mp3out := fmt.Sprintf(`%s/%s.mp3`, newLoc, strings.TrimSuffix(file, ".flac"))
 	args := []string{`-y`, `-i`, filename, `-codec:a`, "libmp3lame", `-q:a`, "0", `-map_metadata`, "0", `-id3v2_version`, "3", `-write_id3v1`, "1", mp3out}
 	cmd := exec.Command("ffmpeg", args...)
-	out, err := cmd.CombinedOutput()
+	_, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Printf("%s", err)
 	}
-	fmt.Printf("%s", string(out))
+	// fmt.Printf("%s", string(out))
 }
 
 func convertFiles(oldFolder string) error {
@@ -67,7 +71,7 @@ func convertFiles(oldFolder string) error {
 		}
 	}
 	wg.Wait()
-	return nil
+	return errors.New(fmt.Sprintf("Files have been saved to:\n%s", newLoc))
 }
 
 func main() {
@@ -78,9 +82,10 @@ func main() {
 
 	folder := os.Args[1]
 	//newFolder := mkFolder(folder)
-	convertFiles(folder)
-	//convertFiles(folder, newFolder)
-
-	//execLame(folder)
-
+	s := spinner.New(spinner.CharSets[43], 100*time.Millisecond)
+	s.Prefix = (fmt.Sprintf("Converting %s...", filepath.Base(folder)))
+	s.Start()
+	run := convertFiles(folder)
+	s.Stop()
+	fmt.Println("\n", run)
 }
