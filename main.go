@@ -17,9 +17,9 @@ import (
 
 func mkFolder(folder, bitrate string) string {
 	// TODO - determine if linux, windows, macos, etc
-	folType := fmt.Sprintf("[%s]", bitrate)
-	if strings.Contains(folder, "[FLAC]") {
-		chgName := strings.Replace(folder, "[FLAC]", folType, -1)
+	//folType := fmt.Sprintf("%s", bitrate)
+	if strings.Contains(folder, "FLAC") {
+		chgName := strings.Replace(folder, "FLAC", bitrate, -1)
 		newpath := filepath.Join("/", chgName)
 		err := os.MkdirAll(newpath, os.ModePerm)
 		if err != nil {
@@ -27,7 +27,7 @@ func mkFolder(folder, bitrate string) string {
 		}
 		return newpath
 	} else {
-		folder_v0 := fmt.Sprintf(`%s %s`, folder, folType)
+		folder_v0 := fmt.Sprintf(`%s %s`, folder, bitrate)
 		newpath := filepath.Join("/", folder_v0)
 		err := os.MkdirAll(newpath, os.ModePerm)
 		if err != nil {
