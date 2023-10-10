@@ -101,7 +101,8 @@ func visit(oldFolder, newFolder string, bitrate string) filepath.WalkFunc {
 		}
 		//fmt.Println(path, newPath)
 		wg.Add(1)
-		return execLame(&wg, path, strings.Replace(newPath, ".flac", ".mp3", -1), bitrate)
+		go func() { execLame(&wg, path, strings.Replace(newPath, ".flac", ".mp3", -1), bitrate) }()
+		return nil
 	}
 }
 
@@ -115,6 +116,9 @@ func main() {
 	bitrate := os.Args[2]
 	newFolder := mkFolder(folder, bitrate)
 
+	s := spinner.New(spinner.CharSets[43], 100*time.Millisecond)
+	s.Prefix = (fmt.Sprintf("Converting %s...", filepath.Base(folder)))
+	s.Start()
 	err := filepath.Walk(folder, visit(folder, newFolder, bitrate))
 	if err != nil {
 		fmt.Println(err)
@@ -123,9 +127,6 @@ func main() {
 	//newLoc := directory
 
 	//newFolder := mkFolder(folder)
-	s := spinner.New(spinner.CharSets[43], 100*time.Millisecond)
-	s.Prefix = (fmt.Sprintf("Converting %s...", filepath.Base(folder)))
-	s.Start()
 	//run := convertFiles(directory, bitrate, newLoc)
 	s.Stop()
 	//fmt.Println("\n", run)
