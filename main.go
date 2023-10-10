@@ -39,7 +39,7 @@ func mkFolder(folder, bitrate string) string {
 	}
 }
 
-func execLame(wg *sync.WaitGroup, filename, newLoc, bitrate string) error {
+func execLame(wg *sync.WaitGroup, filename, newLoc, bitrate string) {
 	// Converts a file from flac to mp3 using FFMPEG //
 
 	defer wg.Done()
@@ -56,9 +56,9 @@ func execLame(wg *sync.WaitGroup, filename, newLoc, bitrate string) error {
 	cmd := exec.Command("ffmpeg", args...)
 	_, err := cmd.Output()
 	if err != nil {
-		fmt.Printf("%s", err)
+		//fmt.Printf("%s", err)
+		fmt.Print(".")
 	}
-	return nil
 }
 
 func convertFiles(oldFolder, bitrate, newLoc string) error {
@@ -85,7 +85,7 @@ func visit(oldFolder, newFolder string, bitrate string) filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
 		var wg sync.WaitGroup
 		if err != nil {
-			fmt.Println(err)
+			//fmt.Println(err)
 			return nil
 		}
 		relativePath, err := filepath.Rel(oldFolder, path)
@@ -101,7 +101,7 @@ func visit(oldFolder, newFolder string, bitrate string) filepath.WalkFunc {
 		}
 		//fmt.Println(path, newPath)
 		wg.Add(1)
-		go func() { execLame(&wg, path, strings.Replace(newPath, ".flac", ".mp3", -1), bitrate) }()
+		go execLame(&wg, path, strings.Replace(newPath, ".flac", ".mp3", -1), bitrate)
 		wg.Wait()
 		return nil
 	}

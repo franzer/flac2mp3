@@ -9,7 +9,8 @@ import (
 func BenchmarkConversion(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// The code to be benchmarked
-		folder := "/Users/franzer/Downloads/Brave Story Original Soundtrack[FLAC]"
+		//folder := "/home/franz/Downloads/Bakemonogatari Portable Special Content CD [FLAC]"
+		folder := `/home/franz/Downloads/[1990.04.05] V.A. - Perfect Collection Dragon Slayer The Legend of Heroes {KICA-1003~4}`
 		bitrate := "V0"
 		newFolder := mkFolder(folder, bitrate)
 
