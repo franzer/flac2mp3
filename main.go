@@ -1,12 +1,10 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -17,7 +15,7 @@ import (
 
 func mkFolder(folder, bitrate string) string {
 	// TODO - determine if linux, windows, macos, etc
-	//folType := fmt.Sprintf("%s", bitrate)
+
 	folder = filepath.Clean(folder)
 
 	if strings.Contains(folder, "FLAC") {
@@ -42,50 +40,24 @@ func mkFolder(folder, bitrate string) string {
 func execLame(wg *sync.WaitGroup, filename, newLoc, bitrate string) {
 	// Converts a file from flac to mp3 using FFMPEG //
 
-	defer wg.Done()
 	var args []string
-	//file := filepath.Base(filename)
-	//mp3out := fmt.Sprintf(`%s%s.mp3`, newLoc, strings.TrimSuffix(file, ".flac"))
-	//fmt.Println(mp3out)
+	defer wg.Done()
 	switch bitrate {
 	case "320":
-		//args = []string{`-y`, `-i`, filename, `-codec:a`, "libmp3lame", `-b:a`, "320k", `-map_metadata`, "0", `-id3v2_version`, "3", `-write_id3v1`, "1", mp3out}
+		args = []string{`-y`, `-i`, filename, `-codec:a`, "libmp3lame", `-b:a`, "320k", `-map_metadata`, "0", `-id3v2_version`, "3", `-write_id3v1`, "1", newLoc}
 	case "V0":
 		args = []string{`-y`, `-i`, filename, `-codec:a`, "libmp3lame", `-q:a`, "0", `-map_metadata`, "0", `-id3v2_version`, "3", `-write_id3v1`, "1", newLoc}
 	}
 	cmd := exec.Command("ffmpeg", args...)
 	_, err := cmd.Output()
 	if err != nil {
-		//fmt.Printf("%s", err)
 		fmt.Print(".")
 	}
 }
 
-func convertFiles(oldFolder, bitrate, newLoc string) error {
-	var wg sync.WaitGroup
-	files, err := os.ReadDir(oldFolder)
-	if err != nil {
-		return err
-	}
-
-	for _, file := range files {
-		path := path.Ext(file.Name())
-		if path == ".flac" {
-			wg.Add(1)
-			//newFile := (fmt.Sprintf(`%s/%s`, strings.TrimRight(oldFolder, "/"), file.Name()))
-			//fmt.Printf("%s - %s\n", newFile, newLoc)
-			//go execLame(&wg, newFile, newLoc, bitrate)
-		}
-	}
-	wg.Wait()
-	return errors.New(fmt.Sprintf("Files have been saved to:\n%s", newLoc))
-}
-
-func visit(oldFolder, newFolder string, bitrate string) filepath.WalkFunc {
+func visit(oldFolder, newFolder string, bitrate string, curFileList, newFileList *[]string) filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
-		var wg sync.WaitGroup
 		if err != nil {
-			//fmt.Println(err)
 			return nil
 		}
 		relativePath, err := filepath.Rel(oldFolder, path)
@@ -99,15 +71,16 @@ func visit(oldFolder, newFolder string, bitrate string) filepath.WalkFunc {
 		if info.IsDir() {
 			return os.MkdirAll(newPath, info.Mode())
 		}
-		//fmt.Println(path, newPath)
-		wg.Add(1)
-		go execLame(&wg, path, strings.Replace(newPath, ".flac", ".mp3", -1), bitrate)
-		wg.Wait()
+		*curFileList = append(*curFileList, path)
+		*newFileList = append(*newFileList, strings.Replace(newPath, ".flac", ".mp3", -1))
 		return nil
 	}
 }
 
 func main() {
+	var curFileList []string
+	var newFileList []string
+	var wg sync.WaitGroup
 	if len(os.Args) < 3 {
 		fmt.Println("Please provide a music folder and bitrate as a command line argument and try again.")
 		return
@@ -120,15 +93,14 @@ func main() {
 	s := spinner.New(spinner.CharSets[43], 100*time.Millisecond)
 	s.Prefix = (fmt.Sprintf("Converting %s...", filepath.Base(folder)))
 	s.Start()
-	err := filepath.Walk(folder, visit(folder, newFolder, bitrate))
+	err := filepath.Walk(folder, visit(folder, newFolder, bitrate, &curFileList, &newFileList))
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	//newLoc := directory
-
-	//newFolder := mkFolder(folder)
-	//run := convertFiles(directory, bitrate, newLoc)
+	for index, file := range curFileList {
+		wg.Add(1)
+		go execLame(&wg, file, newFileList[index], bitrate)
+	}
+	wg.Wait()
 	s.Stop()
-	//fmt.Println("\n", run)
 }
