@@ -102,6 +102,7 @@ func visit(oldFolder, newFolder string, bitrate string) filepath.WalkFunc {
 		//fmt.Println(path, newPath)
 		wg.Add(1)
 		go func() { execLame(&wg, path, strings.Replace(newPath, ".flac", ".mp3", -1), bitrate) }()
+		wg.Wait()
 		return nil
 	}
 }
