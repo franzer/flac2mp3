@@ -38,7 +38,7 @@ func mkFolder(folder, bitrate string) string {
 }
 
 func execLame(wg *sync.WaitGroup, filename, newLoc, bitrate string) {
-	// Converts a file from flac to mp3 using FFMPEG //
+	// Converts a file from source format to mp3 using FFMPEG //
 
 	var args []string
 	defer wg.Done()
@@ -56,6 +56,7 @@ func execLame(wg *sync.WaitGroup, filename, newLoc, bitrate string) {
 }
 
 func visit(oldFolder, newFolder string, bitrate string, curFileList, newFileList *[]string) filepath.WalkFunc {
+	// Takes in a target location, walks through the folders and files, and puts them in to their respective slices //
 	return func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
@@ -72,7 +73,7 @@ func visit(oldFolder, newFolder string, bitrate string, curFileList, newFileList
 			return os.MkdirAll(newPath, info.Mode())
 		}
 		*curFileList = append(*curFileList, path)
-		*newFileList = append(*newFileList, strings.Replace(newPath, ".flac", ".mp3", -1))
+		*newFileList = append(*newFileList, strings.Replace(newPath, filepath.Ext(newPath), ".mp3", -1))
 		return nil
 	}
 }
@@ -81,6 +82,7 @@ func main() {
 	var curFileList []string
 	var newFileList []string
 	var wg sync.WaitGroup
+
 	if len(os.Args) < 3 {
 		fmt.Println("Please provide a music folder and bitrate as a command line argument and try again.")
 		return
