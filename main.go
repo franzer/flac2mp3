@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -83,25 +84,29 @@ func main() {
 	var newFileList []string
 	var wg sync.WaitGroup
 
+	folder := flag.String("f", "", "Folder you would like to convert (/home/user/Music/Music Folder)")
+	bitrate := flag.String("b", "V0", "Bitrate you want to convert to 320 (CBR) or V0(VRR).")
+	flag.Parse()
+
 	if len(os.Args) < 3 {
-		fmt.Println("Please provide a music folder and bitrate as a command line argument and try again.")
+		fmt.Println("Please provide a music folder and bitrate as a command line argument and try again.  Use -h or --help to see flags.")
 		return
 	}
 
-	folder := os.Args[1]
-	bitrate := os.Args[2]
-	newFolder := mkFolder(folder, bitrate)
+	//folder := os.Args[1]
+	//bitrate := os.Args[2]
+	newFolder := mkFolder(*folder, *bitrate)
 
 	s := spinner.New(spinner.CharSets[43], 100*time.Millisecond)
-	s.Prefix = (fmt.Sprintf("Converting %s...", filepath.Base(folder)))
+	s.Prefix = (fmt.Sprintf("Converting %s...", filepath.Base(*folder)))
 	s.Start()
-	err := filepath.Walk(folder, visit(folder, newFolder, bitrate, &curFileList, &newFileList))
+	err := filepath.Walk(*folder, visit(*folder, newFolder, *bitrate, &curFileList, &newFileList))
 	if err != nil {
 		fmt.Println(err)
 	}
 	for index, file := range curFileList {
 		wg.Add(1)
-		go execLame(&wg, file, newFileList[index], bitrate)
+		go execLame(&wg, file, newFileList[index], *bitrate)
 	}
 	wg.Wait()
 	s.Stop()
