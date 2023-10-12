@@ -109,5 +109,6 @@ func main() {
 		go execLame(&wg, file, newFileList[index], *bitrate)
 	}
 	wg.Wait()
+	fmt.Printf("Your files are located at:\n%s", newFolder)
 	s.Stop()
 }
