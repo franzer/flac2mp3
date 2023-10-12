@@ -93,8 +93,6 @@ func main() {
 		return
 	}
 
-	//folder := os.Args[1]
-	//bitrate := os.Args[2]
 	newFolder := mkFolder(*folder, *bitrate)
 
 	s := spinner.New(spinner.CharSets[43], 100*time.Millisecond)
