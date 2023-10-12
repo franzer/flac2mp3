@@ -10,4 +10,4 @@ A FFMPEG wrapper written in Go to quickly convert FLAC files to MP3 in either 32
   - ex. flac2mp3 -f /home/User/Music/Folder -b V0
 - Wait for flac2mp3 to finish
 - Your new folder will be in /home/User/Music/Folder V0
-
+```
